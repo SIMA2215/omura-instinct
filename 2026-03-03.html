@@ -491,6 +491,8 @@ table.dt{border-collapse:collapse; width:100%}
 .cal-bar .link.over{background:var(--warn)}          /* ズレが許容を超えた行だけ色を付ける */
 .cal-bar .dot{position:absolute; top:50%; width:9px; height:9px; border-radius:50%;
   transform:translate(-50%,-50%); box-shadow:0 0 0 2px var(--surface)}
+/* 点は9pxで狙いにくいので、見た目を変えずに当たり判定だけ広げる */
+.cal-bar .dot::after{content:""; position:absolute; inset:-8px; border-radius:50%}
 .cal-bar .pred{background:var(--surface); border:2px solid var(--muted)}  /* 予測＝中空 */
 .cal-bar .act{background:var(--ink)}                                      /* 実測＝塗り */
 /* ── ツールチップ ──
@@ -1069,8 +1071,11 @@ function calRows(rows, max){
       <span class="lb">${r.label}</span>
       <span class="cal-bar">
         <i class="link${over?" over":""}" style="left:${lo}%;width:${w}%"></i>
-        <i class="dot pred" style="left:${p}%" title="予測 ${r.pred.toFixed(1)}%"></i>
-        <i class="dot act"  style="left:${a}%" title="実測 ${r.act.toFixed(1)}%"></i>
+        <i class="dot pred" style="left:${p}%" tabindex="0"
+          data-tip="<b>${r.label}</b><br>予測 ${r.pred.toFixed(1)}%（モデルがそう言った割合）"></i>
+        <i class="dot act"  style="left:${a}%" tabindex="0"
+          data-tip="<b>${r.label}</b><br>実測 ${r.act.toFixed(1)}%（実際にそうなった割合）<br>ズレ ${
+            d>=0?"+":""}${d.toFixed(1)}pt"></i>
       </span>
       <span class="cal-num"><span>予測 ${r.pred.toFixed(1)}%</span><span>実測 ${r.act.toFixed(1)}%</span></span>
       <span class="lb ${over?(d>0?"gain":"loss"):""}">${d>=0?"+":""}${d.toFixed(1)}${
