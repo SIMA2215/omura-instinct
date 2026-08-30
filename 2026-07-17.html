@@ -493,6 +493,40 @@ table.dt{border-collapse:collapse; width:100%}
   transform:translate(-50%,-50%); box-shadow:0 0 0 2px var(--surface)}
 .cal-bar .pred{background:var(--surface); border:2px solid var(--muted)}  /* 予測＝中空 */
 .cal-bar .act{background:var(--ink)}                                      /* 実測＝塗り */
+/* ── ツールチップ ──
+   それまで説明を title 属性に入れていたが、ブラウザ標準の吹き出しは
+   出るまで1〜2秒かかり、ダークテーマの中に白いOS標準の見た目で出て、
+   そして**スマホでは出ない**。108個の情報が実質読まれていなかった。
+   自前で1つ用意して data-tip に載せ替える。タップでも出す。 */
+#tip{position:fixed; z-index:60; max-width:min(320px,88vw); padding:8px 10px;
+  background:var(--surface-3); color:var(--ink); border:1px solid var(--line);
+  border-radius:7px; box-shadow:var(--sh-top); font-size:11.5px; line-height:1.6;
+  pointer-events:none; opacity:0; transform:translateY(3px); visibility:hidden;
+  transition:opacity .12s, transform .12s}
+#tip.on{opacity:1; transform:none; visibility:visible}
+#tip b{color:var(--ember)}
+@media (prefers-reduced-motion:reduce){ #tip{transition:none} }
+[data-tip]{cursor:help}
+.devchip[data-tip],.run i[data-tip]{cursor:pointer}
+
+/* ── 荒れ度の分布 ── */
+.ubhist{margin:2px 0 4px}
+.ub-plot{display:grid; grid-template-columns:repeat(10,1fr); gap:5px;
+  align-items:end; height:170px; padding:0 2px}
+.ub-col{display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  height:100%; gap:3px; cursor:help; border-radius:4px; padding-bottom:2px; transition:.12s}
+.ub-col:hover,.ub-col:focus-visible{background:rgba(42,212,197,.07)}
+.ub-col i{display:block; width:100%; border-radius:3px 3px 0 0; order:2}
+.ub-col .ub-n{order:1; font-family:var(--f-mono); font-size:9.5px; color:var(--ink-2);
+  font-variant-numeric:tabular-nums}
+.ub-col .ub-x{order:3; font-family:var(--f-mono); font-size:9.5px; color:var(--muted)}
+.ub-axis{font-size:10.5px; color:var(--muted); text-align:center; margin-top:5px;
+  font-family:var(--f-mono)}
+.ubhist-legend{display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  font-size:10.5px; font-family:var(--f-mono); color:var(--muted); margin-bottom:7px}
+.ubhist-legend span{display:inline-flex; align-items:center; gap:5px}
+.ubhist-legend i{display:inline-block; width:10px; height:10px; border-radius:2px}
+
 .mchart{width:100%; margin:2px 0 10px}
 .mchart svg{width:100%; height:auto; display:block; overflow:visible}
 .mchart-legend{display:flex; align-items:center; gap:16px; flex-wrap:wrap;
@@ -896,6 +930,38 @@ function raceCharacter(){
   return {tag:"イン苦戦",cls:"t-collapse",inn,text:"この6艇と条件では、インが有利とは言えません。"};
 }
 
+/* ═════════ ツールチップ ═════════ */
+/* data-tip を持つ要素にホバー／フォーカス／タップで出す。
+   イベントは document に1つだけ張る（要素が再描画されても効くように）。 */
+const tipEl=(()=>{const d=document.createElement("div"); d.id="tip";
+  d.setAttribute("role","tooltip"); document.body.appendChild(d); return d})();
+let tipFor=null;
+function tipShow(el){
+  const t=el.getAttribute("data-tip"); if(!t) return;
+  tipFor=el; tipEl.innerHTML=t; tipEl.classList.add("on");
+  const r=el.getBoundingClientRect(), b=tipEl.getBoundingClientRect();
+  let x=r.left+r.width/2-b.width/2;
+  x=Math.max(8, Math.min(x, innerWidth-b.width-8));      // 画面端で見切れないように
+  let y=r.top-b.height-8;
+  if(y<8) y=r.bottom+8;                                   // 上に出せなければ下へ
+  tipEl.style.left=x+"px"; tipEl.style.top=y+"px";
+}
+function tipHide(){ tipFor=null; tipEl.classList.remove("on") }
+document.addEventListener("pointerover",e=>{
+  const el=e.target.closest("[data-tip]");
+  if(el){ if(el!==tipFor) tipShow(el) } else if(tipFor) tipHide();
+});
+document.addEventListener("focusin",e=>{
+  const el=e.target.closest("[data-tip]"); el?tipShow(el):tipHide();
+});
+/* タップ端末用。ホバーが無いので、押したら出して、他を押したら消す */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-tip]");
+  if(el) tipShow(el); else tipHide();
+});
+document.addEventListener("scroll",()=>{if(tipFor) tipHide()}, true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape") tipHide()});
+
 /* ═════════ 月次の推移（折れ線） ═════════ */
 /* 209開催日ぶんのデータを持ちながら時系列のグラフが1つも無かった。
    「月次で1号艇1着率が18.5pt振れる」が文章でしか存在していなかったので図にする。
@@ -945,6 +1011,39 @@ function monthlyChart(rows, baseline){
     ${call(hi2,-9)}${call(lo2,16)}
     ${labs}
   </svg></div>`;
+}
+
+/* ═════════ 荒れ度の分布（ヒストグラム） ═════════ */
+/* しきい値 70/60/25% がなぜそこなのかが画面から分からなかった。
+   2,496レースがどう散らばっていて、線がどこを切っているかを見せる。
+   データは upset_backtest.json の calib の n をそのまま使う（集計は足さない）。 */
+function upsetHistogram(calib, bands){
+  const rows=calib.filter(c=>c.n);
+  if(!rows.length) return "";
+  const max=Math.max(...rows.map(c=>c.n));
+  const total=rows.reduce((a,c)=>a+c.n,0);
+  const H=132;
+  // 帯の色。10%刻みの棒を、その棒が属する帯の色で塗る
+  const band=lo=>lo>=70?"var(--crit)":lo>=60?"var(--warn)":lo<25?"var(--good)":"var(--chart)";
+  const lab=lo=>lo>=70?"⚡⚡ 最注目":lo>=60?"⚡ 荒れ注目":lo<25?"🔒 堅い":"バッジなし";
+  const bars=rows.map(c=>{
+    const h=Math.max(2, c.n/max*H);
+    return `<div class="ub-col" tabindex="0"
+      data-tip="<b>荒れ度 ${c.lo}-${c.hi}%</b><br>${c.n.toLocaleString()}レース（全体の ${
+        (c.n/total*100).toFixed(1)}%）<br>実際に荒れた率 ${c.act}%<br>${lab(c.lo)}の帯">
+      <i style="height:${h.toFixed(1)}px;background:${band(c.lo)}"></i>
+      <span class="ub-n">${c.n}</span>
+      <span class="ub-x">${c.lo}</span></div>`}).join("");
+  const b=Object.fromEntries(bands.map(x=>[x.key,x]));
+  return `
+  <div class="ubhist-legend">
+    <span><i style="background:var(--good)"></i>🔒 堅い ${b.solid.n}本</span>
+    <span><i style="background:var(--chart)"></i>バッジなし ${b["null"]?b["null"].n:bands.find(x=>!x.key).n}本</span>
+    <span><i style="background:var(--warn)"></i>⚡ 荒れ注目 ${b.watch.n}本</span>
+    <span><i style="background:var(--crit)"></i>⚡⚡ 最注目 ${b.alert.n}本</span>
+  </div>
+  <div class="ubhist"><div class="ub-plot">${bars}</div>
+    <div class="ub-axis">荒れ度（%）　→　右へ行くほど1号艇が1着になりにくい</div></div>`;
 }
 
 /* ═════════ キャリブレーション（ダンベル図） ═════════ */
@@ -1055,7 +1154,8 @@ function devChips(r, show){
     {k:"結果", v:live.winnerLane?`${live.winnerLane}号艇 ${live.kimarite||"—"}`:"—", level:"flat"},
   ] : [];
   return pre.concat(liveChips).map(x=>
-    `<span class="devchip ${devCls(x.level)}" title="${x.detail||""}">
+    `<span class="devchip ${devCls(x.level)}" tabindex="0"
+      data-tip="${x.detail?`<b>${x.k}</b> ${x.v}<br>${x.detail}`:`<b>${x.k}</b> ${x.v}`}">
       <b>${x.k}</b>${x.v}</span>`).join("");
 }
 function devStrip(r, show){
@@ -1240,14 +1340,23 @@ function heat(v,kind,sub,n){
   const warm = kind==="st" && step<=1;
   const bg = warm ? `var(--w${Math.max(0,2-step)})` : `var(--h${step})`;
   const fg = (!warm && step>=3) ? "var(--onheat)" : "var(--ink)";
-  return `<span class="hcell" style="background:${bg};color:${fg}">${txt}${sub?`<span class="sub">${sub}</span>`:""}</span>`;
+  // 色が薄い理由（母数が少ない）は、見ただけでは分からないので添える
+  const KIND={rate:"2連率",motor:"モーター2連率",win:"勝率",st:"平均ST",lanewin:"1着率"}[kind]||"";
+  let tip=`<b>${KIND}</b> ${txt}`;
+  if(n!=null) tip+=`<br>母数 ${n}走`
+    + (n<10?`<br>10走未満なので色を薄くしています。2走で100%でも濃く塗ると嘘になるため`:"");
+  return `<span class="hcell" data-tip="${tip}" tabindex="0"
+    style="background:${bg};color:${fg}">${txt}${sub?`<span class="sub">${sub}</span>`:""}</span>`;
 }
 function runHTML(recent){
   if(!recent||!recent.length) return '<span style="color:var(--muted);font-size:10px">—</span>';
   return `<span class="run">${recent.map(x=>{
     const p=typeof x.pos==="number"?x.pos:null;
     const cls=p===1?"r1":p===2?"r2":p===3?"r3":"ro";
-    return `<i class="${cls}" title="${x.date} ${x.rno}R ${x.lane}号艇">${p||String(x.pos).slice(0,1)}</i>`;
+    const st=x.st!=null?`${(x.stFlag||"")}${x.st.toFixed(2).slice(1)}`:"—";
+    return `<i class="${cls}" tabindex="0" data-tip="<b>${x.date} ${x.rno}R</b><br>${
+      x.lane}号艇から${x.course?x.course+"コース":"進入不明"}<br>着順 ${p||x.pos} ／ ST ${st}"
+      >${p||String(x.pos).slice(0,1)}</i>`;
   }).join("")}</span>`;
 }
 
@@ -1733,6 +1842,10 @@ function upsetBacktestHTML(){
           <b>${UB.days}開催日 / ${UB.races.toLocaleString()}レース</b>。
           荒れ度＝1号艇が1着にならない確率で、<b>番組表が出た時点の値（前日版）</b>で判定しています。
           展示タイムも風も使っていません。</div>
+        <div class="lead" style="margin:0 0 8px">
+          まず<b>2,496レースがどう散らばっているか</b>。
+          しきい値がどこを切っているかも同時に見えます。</div>
+        ${upsetHistogram(UB.calib, UB.bands)}
         <table class="bt-table">
           <thead><tr><th>バッジ</th><th>該当</th><th></th><th>実際に荒れた率</th>
             <th>基準値</th><th>差</th><th>1号艇1着率</th><th>1日あたり</th></tr></thead>
