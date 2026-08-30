@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大村インスティンクト</title>
+<meta name="description" content="BOAT RACE大村の公式データから荒れ度とポイントを出す比較ツール。209開催日2,496レースの答え合わせつき。">
+<meta property="og:title" content="大村インスティンクト">
+<meta property="og:description" content="データで考え、直感で遊ぶ。予想は売りません。">
+<meta name="theme-color" content="#050B11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+:root{color-scheme:dark;
+  --ground:#050B11; --surface:#0A1821; --surface-2:#102531; --line:#2A5261;
+  --ink:#EAF7F8; --ink-2:#B2D2D7; --muted:#7FA0AA; --ember:#21D6C3;
+  --crit:#FF5D64; --warn:#F0A83B; --good:#48D684;
+  --f-display:"Dela Gothic One","Zen Kaku Gothic New",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  --f-mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0; background:
+  linear-gradient(rgba(42,212,197,.035) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(42,212,197,.035) 1px, transparent 1px),
+  linear-gradient(180deg, rgba(20,63,78,.36), rgba(5,11,17,0) 280px),
+  var(--ground); background-size:34px 34px,34px 34px,auto,auto;
+  color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px; margin:0 auto; padding:0 14px 80px}
+h1,h2{margin:0; text-wrap:balance}
+a{color:var(--ember)}
+:focus-visible{outline:2px solid var(--ember); outline-offset:2px; border-radius:4px}
+.mast{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  padding:22px 0 12px; border-bottom:1px solid var(--line); margin-bottom:16px;
+  box-shadow:0 1px 0 rgba(42,212,197,.18)}
+.mark{font-family:var(--f-display); font-size:clamp(21px,5vw,30px); line-height:1}
+.mark .amp{color:var(--ember); text-shadow:0 0 16px rgba(33,214,195,.45)}
+.tag{font-size:11px; color:var(--muted); letter-spacing:.14em;
+  text-transform:uppercase; font-family:var(--f-mono); margin-top:4px}
+.lead{font-size:13px; color:var(--ink-2); line-height:1.8; margin:0 0 18px;
+  max-width:62ch}
+.lead b{color:var(--ink)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:10px; margin-bottom:22px}
+.stat{border:1px solid var(--line); border-radius:8px; padding:11px 13px;
+  background:var(--surface)}
+.stat .k{font-size:10.5px; color:var(--muted); font-family:var(--f-mono);
+  letter-spacing:.06em; text-transform:uppercase}
+.stat .v{font-family:var(--f-display); font-size:23px; line-height:1.3;
+  font-variant-numeric:tabular-nums}
+.stat .v small{font-size:12px; color:var(--muted); font-family:var(--f-mono)}
+.stat .d{font-size:10.5px; color:var(--muted); line-height:1.5; margin-top:3px}
+h2{font-size:15px; margin:26px 0 10px}
+ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+li a{display:grid; grid-template-columns:120px 1fr auto auto; gap:12px;
+  align-items:center; padding:10px 13px; border:1px solid var(--line);
+  border-radius:8px; background:var(--surface); text-decoration:none;
+  color:var(--ink); transition:.12s}
+li a:hover{border-color:var(--ember); background:var(--surface-2)}
+.d{font-family:var(--f-mono); font-size:13px; font-variant-numeric:tabular-nums}
+.t{font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap}
+.c{display:flex; gap:5px; flex-wrap:wrap}
+.r{font-family:var(--f-mono); font-size:11px; color:var(--muted); white-space:nowrap}
+.chip{font-size:10.5px; font-family:var(--f-mono); border-radius:5px;
+  padding:2px 7px; white-space:nowrap; color:#041115; font-weight:700}
+.b-alert{background:var(--crit); color:#fff} .b-watch{background:var(--warn); color:#241300}
+.b-solid{background:var(--good); color:#04180C} .b-none{background:var(--surface-2); color:var(--muted)}
+.foot{margin-top:30px; padding-top:16px; border-top:1px solid var(--line);
+  font-size:11.5px; color:var(--muted); line-height:1.8}
+@media (max-width:640px){
+  li a{grid-template-columns:1fr; gap:6px}
+  .t{white-space:normal}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="mast">
+  <div><div class="mark">Data <span class="amp">&amp;</span> Instinct</div>
+    <div class="tag">データで考え、直感で遊ぶ</div></div>
+</header>
+
+<p class="lead">BOAT RACE大村（jcd=24）の公式データだけを使った比較ツールです。
+<b>予想は売りません。買い目も出しません。</b>
+「このレースはこういう構造です」というデータと、<b>その答え合わせ</b>を並べています。
+オッズ・期待値・回収率は使っていません。市場の期待値であって、水面の物理現象ではないからです。</p>
+
+<div class="stats">
+  <div class="stat"><div class="k">検証したレース</div>
+    <div class="v">2,496<small> レース</small></div>
+    <div class="d">209開催日 ／ 2025-08-22 〜 2026-08-23</div></div>
+  <div class="stat"><div class="k">⚡⚡ 最注目（荒れ度70%以上）</div>
+    <div class="v">74.6<small>%</small></div>
+    <div class="d">189本中、実際に荒れた割合</div></div>
+  <div class="stat"><div class="k">🔒 堅い（荒れ度25%以下）</div>
+    <div class="v">79.2<small>%</small></div>
+    <div class="d">660本中、1号艇が1着だった割合</div></div>
+  <div class="stat"><div class="k">前日と直前の一致</div>
+    <div class="v">0.966</div>
+    <div class="d">荒れ度の相関。番組表の時点でほぼ決まる</div></div>
+</div>
+
+<h2>開催日（新しい順・209日）</h2>
+<ul>
+<li><a href="2026-08-23.html"><span class="d">2026-08-23</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-08-22.html"><span class="d">2026-08-22</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-08-21.html"><span class="d">2026-08-21</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 4</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-08-20.html"><span class="d">2026-08-20</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-08-17.html"><span class="d">2026-08-17</span><span class="t">オールレディース競走　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-08-16.html"><span class="d">2026-08-16</span><span class="t">オールレディース競走　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-08-15.html"><span class="d">2026-08-15</span><span class="t">オールレディース競走　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-08-14.html"><span class="d">2026-08-14</span><span class="t">オールレディース競走　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-08-13.html"><span class="d">2026-08-13</span><span class="t">オールレディース競走　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-08-12.html"><span class="d">2026-08-12</span><span class="t">オールレディース競走　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-08-10.html"><span class="d">2026-08-10</span><span class="t">ＢＯＡＴＲＡＣＥ振興会会長賞　第5日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-08-09.html"><span class="d">2026-08-09</span><span class="t">ＢＯＡＴＲＡＣＥ振興会会長賞　第4日</span><span class="c"><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-08-08.html"><span class="d">2026-08-08</span><span class="t">ＢＯＡＴＲＡＣＥ振興会会長賞　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-08-07.html"><span class="d">2026-08-07</span><span class="t">ＢＯＡＴＲＡＣＥ振興会会長賞　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/11</span></a></li>
+<li><a href="2026-08-06.html"><span class="d">2026-08-06</span><span class="t">ＢＯＡＴＲＡＣＥ振興会会長賞　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-07-31.html"><span class="d">2026-07-31</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 １　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-30.html"><span class="d">2026-07-30</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 １　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-29.html"><span class="d">2026-07-29</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 １　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-28.html"><span class="d">2026-07-28</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 １　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-07-25.html"><span class="d">2026-07-25</span><span class="t">ミッドナイトボートレースｉｎ大村 ６　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-24.html"><span class="d">2026-07-24</span><span class="t">ミッドナイトボートレースｉｎ大村 ６　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-23.html"><span class="d">2026-07-23</span><span class="t">ミッドナイトボートレースｉｎ大村 ６　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-07-22.html"><span class="d">2026-07-22</span><span class="t">ミッドナイトボートレースｉｎ大村 ６　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-07-17.html"><span class="d">2026-07-17</span><span class="t">ミッドナイトボートレースｉｎ大村 ５　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-07-16.html"><span class="d">2026-07-16</span><span class="t">ミッドナイトボートレースｉｎ大村 ５　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-15.html"><span class="d">2026-07-15</span><span class="t">ミッドナイトボートレースｉｎ大村 ５　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-07-14.html"><span class="d">2026-07-14</span><span class="t">ミッドナイトボートレースｉｎ大村 ５　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-07-09.html"><span class="d">2026-07-09</span><span class="t">ミッドナイトボートレースｉｎ大村 ４　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-07-08.html"><span class="d">2026-07-08</span><span class="t">ミッドナイトボートレースｉｎ大村 ４　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-07.html"><span class="d">2026-07-07</span><span class="t">ミッドナイトボートレースｉｎ大村 ４　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 4</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-07-06.html"><span class="d">2026-07-06</span><span class="t">ミッドナイトボートレースｉｎ大村 ４　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 5</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-07-05.html"><span class="d">2026-07-05</span><span class="t">ミッドナイトボートレースｉｎ大村 ４　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-07-02.html"><span class="d">2026-07-02</span><span class="t">スポーツ報知杯　第7日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-07-01.html"><span class="d">2026-07-01</span><span class="t">スポーツ報知杯　第6日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-06-30.html"><span class="d">2026-06-30</span><span class="t">スポーツ報知杯　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-06-29.html"><span class="d">2026-06-29</span><span class="t">スポーツ報知杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-06-28.html"><span class="d">2026-06-28</span><span class="t">スポーツ報知杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-06-27.html"><span class="d">2026-06-27</span><span class="t">スポーツ報知杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-06-26.html"><span class="d">2026-06-26</span><span class="t">スポーツ報知杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-06-22.html"><span class="d">2026-06-22</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第6日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-06-21.html"><span class="d">2026-06-21</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-06-20.html"><span class="d">2026-06-20</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第4日</span><span class="c"><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-06-19.html"><span class="d">2026-06-19</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-06-18.html"><span class="d">2026-06-18</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-06-17.html"><span class="d">2026-06-17</span><span class="t">ボートレース発祥地記念第３０回モーターボート誕生祭　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-06-10.html"><span class="d">2026-06-10</span><span class="t">ミッドナイトボートレースｉｎ大村 ３　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-06-09.html"><span class="d">2026-06-09</span><span class="t">ミッドナイトボートレースｉｎ大村 ３　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-06-08.html"><span class="d">2026-06-08</span><span class="t">ミッドナイトボートレースｉｎ大村 ３　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-06-07.html"><span class="d">2026-06-07</span><span class="t">ミッドナイトボートレースｉｎ大村 ３　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-06-06.html"><span class="d">2026-06-06</span><span class="t">ミッドナイトボートレースｉｎ大村 ３　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-06-04.html"><span class="d">2026-06-04</span><span class="t">ミッドナイトボートレースｉｎ大村 ２　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-06-03.html"><span class="d">2026-06-03</span><span class="t">ミッドナイトボートレースｉｎ大村 ２　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-06-02.html"><span class="d">2026-06-02</span><span class="t">ミッドナイトボートレースｉｎ大村 ２　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 0/2</span></a></li>
+<li><a href="2026-06-01.html"><span class="d">2026-06-01</span><span class="t">ミッドナイトボートレースｉｎ大村 ２　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-05-29.html"><span class="d">2026-05-29</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-05-28.html"><span class="d">2026-05-28</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-05-27.html"><span class="d">2026-05-27</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-05-26.html"><span class="d">2026-05-26</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-05-25.html"><span class="d">2026-05-25</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-05-24.html"><span class="d">2026-05-24</span><span class="t">ヴィーナスシリーズ 第４戦 スマホマクール杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-05-11.html"><span class="d">2026-05-11</span><span class="t">長崎新聞社杯　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-05-10.html"><span class="d">2026-05-10</span><span class="t">長崎新聞社杯　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-05-09.html"><span class="d">2026-05-09</span><span class="t">長崎新聞社杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 5</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-05-08.html"><span class="d">2026-05-08</span><span class="t">長崎新聞社杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-05-07.html"><span class="d">2026-05-07</span><span class="t">長崎新聞社杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-05-01.html"><span class="d">2026-05-01</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-04-30.html"><span class="d">2026-04-30</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 7</span></span><span class="r">1号艇1着 3/12</span></a></li>
+<li><a href="2026-04-29.html"><span class="d">2026-04-29</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-04-28.html"><span class="d">2026-04-28</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-04-27.html"><span class="d">2026-04-27</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 3/12</span></a></li>
+<li><a href="2026-04-26.html"><span class="d">2026-04-26</span><span class="t">ミッドナイトボートレースｉｎ大村 １　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-04-23.html"><span class="d">2026-04-23</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-04-22.html"><span class="d">2026-04-22</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 8</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-04-21.html"><span class="d">2026-04-21</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-04-20.html"><span class="d">2026-04-20</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-04-19.html"><span class="d">2026-04-19</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-04-18.html"><span class="d">2026-04-18</span><span class="t">ＲＳ第９戦 スカパー！・ＪＬＣ杯 オール進入固定　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-04-13.html"><span class="d">2026-04-13</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第7日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-04-12.html"><span class="d">2026-04-12</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2026-04-11.html"><span class="d">2026-04-11</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-04-10.html"><span class="d">2026-04-10</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-04-09.html"><span class="d">2026-04-09</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-04-08.html"><span class="d">2026-04-08</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-04-07.html"><span class="d">2026-04-07</span><span class="t">ＢＴＳ鹿島開設１１周年記念 肥前鹿島干潟杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-04-02.html"><span class="d">2026-04-02</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-04-01.html"><span class="d">2026-04-01</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-03-31.html"><span class="d">2026-03-31</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-03-30.html"><span class="d">2026-03-30</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-03-29.html"><span class="d">2026-03-29</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-03-28.html"><span class="d">2026-03-28</span><span class="t">おおむら桜祭り競走 イオン大謝恩祭　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-03-22.html"><span class="d">2026-03-22</span><span class="t">ミッドナイトボートレースｉｎ大村 １２　第5日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-03-21.html"><span class="d">2026-03-21</span><span class="t">ミッドナイトボートレースｉｎ大村 １２　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 7</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-03-20.html"><span class="d">2026-03-20</span><span class="t">ミッドナイトボートレースｉｎ大村 １２　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-03-19.html"><span class="d">2026-03-19</span><span class="t">ミッドナイトボートレースｉｎ大村 １２　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-03-18.html"><span class="d">2026-03-18</span><span class="t">ミッドナイトボートレースｉｎ大村 １２　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-03-13.html"><span class="d">2026-03-13</span><span class="t">開設７３周年記念 海の王者決定戦　第6日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-03-12.html"><span class="d">2026-03-12</span><span class="t">開設７３周年記念 海の王者決定戦　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-03-11.html"><span class="d">2026-03-11</span><span class="t">開設７３周年記念 海の王者決定戦　第4日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-03-10.html"><span class="d">2026-03-10</span><span class="t">開設７３周年記念 海の王者決定戦　第3日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-03-09.html"><span class="d">2026-03-09</span><span class="t">開設７３周年記念 海の王者決定戦　第2日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-03-08.html"><span class="d">2026-03-08</span><span class="t">開設７３周年記念 海の王者決定戦　第1日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-03-03.html"><span class="d">2026-03-03</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-03-02.html"><span class="d">2026-03-02</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 8</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-03-01.html"><span class="d">2026-03-01</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-02-28.html"><span class="d">2026-02-28</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-02-27.html"><span class="d">2026-02-27</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-02-26.html"><span class="d">2026-02-26</span><span class="t">ＲＳ第４戦 スカパー！・ＪＬＣ杯 オール進入固定　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-02-23.html"><span class="d">2026-02-23</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 ２ｎｄ　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2026-02-22.html"><span class="d">2026-02-22</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 ２ｎｄ　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 7</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-02-21.html"><span class="d">2026-02-21</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 ２ｎｄ　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-02-20.html"><span class="d">2026-02-20</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 ２ｎｄ　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-02-19.html"><span class="d">2026-02-19</span><span class="t">にっぽん未来プロジェクト競走ｉｎ大村 ２ｎｄ　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-28.html"><span class="d">2026-01-28</span><span class="t">スポーツニッポン杯　第7日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-01-27.html"><span class="d">2026-01-27</span><span class="t">スポーツニッポン杯　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-01-26.html"><span class="d">2026-01-26</span><span class="t">スポーツニッポン杯　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2026-01-25.html"><span class="d">2026-01-25</span><span class="t">スポーツニッポン杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-24.html"><span class="d">2026-01-24</span><span class="t">スポーツニッポン杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-23.html"><span class="d">2026-01-23</span><span class="t">スポーツニッポン杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-01-22.html"><span class="d">2026-01-22</span><span class="t">スポーツニッポン杯　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2026-01-20.html"><span class="d">2026-01-20</span><span class="t">ＭＮボートレースｉｎ大村１１　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2026-01-19.html"><span class="d">2026-01-19</span><span class="t">ＭＮボートレースｉｎ大村１１　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 9</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2026-01-18.html"><span class="d">2026-01-18</span><span class="t">ＭＮボートレースｉｎ大村１１　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2026-01-17.html"><span class="d">2026-01-17</span><span class="t">ＭＮボートレースｉｎ大村１１　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-16.html"><span class="d">2026-01-16</span><span class="t">ＭＮボートレースｉｎ大村１１　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2026-01-15.html"><span class="d">2026-01-15</span><span class="t">ＭＮボートレースｉｎ大村１１　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2026-01-08.html"><span class="d">2026-01-08</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 7</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-07.html"><span class="d">2026-01-07</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2026-01-06.html"><span class="d">2026-01-06</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 4</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-01-05.html"><span class="d">2026-01-05</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-01-04.html"><span class="d">2026-01-04</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 4</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2026-01-03.html"><span class="d">2026-01-03</span><span class="t">ミッドナイトボートレースｉｎ大村１０新春感謝競走　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-12-31.html"><span class="d">2025-12-31</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第6日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 12/12</span></a></li>
+<li><a href="2025-12-30.html"><span class="d">2025-12-30</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第5日</span><span class="c"><span class="chip b-none">注目なし</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2025-12-29.html"><span class="d">2025-12-29</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第4日</span><span class="c"><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-12-28.html"><span class="d">2025-12-28</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-12-27.html"><span class="d">2025-12-27</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-12-26.html"><span class="d">2025-12-26</span><span class="t">第１４回クイーンズクライマックス／Ｇ３ＱＣシリーズ　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-12-19.html"><span class="d">2025-12-19</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第7日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-12-18.html"><span class="d">2025-12-18</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-12-17.html"><span class="d">2025-12-17</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-12-16.html"><span class="d">2025-12-16</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-12-15.html"><span class="d">2025-12-15</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-12-14.html"><span class="d">2025-12-14</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-12-13.html"><span class="d">2025-12-13</span><span class="t">日刊スポーツ杯＆ニッカン・コム杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-12-06.html"><span class="d">2025-12-06</span><span class="t">ＭＮボートレースｉｎ大村９ＢＴＳ長崎五島開設記念　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2025-12-05.html"><span class="d">2025-12-05</span><span class="t">ＭＮボートレースｉｎ大村９ＢＴＳ長崎五島開設記念　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-12-04.html"><span class="d">2025-12-04</span><span class="t">ＭＮボートレースｉｎ大村９ＢＴＳ長崎五島開設記念　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-12-03.html"><span class="d">2025-12-03</span><span class="t">ＭＮボートレースｉｎ大村９ＢＴＳ長崎五島開設記念　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/11</span></a></li>
+<li><a href="2025-11-30.html"><span class="d">2025-11-30</span><span class="t">アサヒビールカップ　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2025-11-29.html"><span class="d">2025-11-29</span><span class="t">アサヒビールカップ　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-11-28.html"><span class="d">2025-11-28</span><span class="t">アサヒビールカップ　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-11-27.html"><span class="d">2025-11-27</span><span class="t">アサヒビールカップ　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-11-26.html"><span class="d">2025-11-26</span><span class="t">アサヒビールカップ　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-11-25.html"><span class="d">2025-11-25</span><span class="t">アサヒビールカップ　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 3</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-11-22.html"><span class="d">2025-11-22</span><span class="t">ミッドナイトボートレースｉｎ大村８ＢＯＡＴＢｏｙ杯　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-11-21.html"><span class="d">2025-11-21</span><span class="t">ミッドナイトボートレースｉｎ大村８ＢＯＡＴＢｏｙ杯　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-11-20.html"><span class="d">2025-11-20</span><span class="t">ミッドナイトボートレースｉｎ大村８ＢＯＡＴＢｏｙ杯　第2日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-11-19.html"><span class="d">2025-11-19</span><span class="t">ミッドナイトボートレースｉｎ大村８ＢＯＡＴＢｏｙ杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-11-06.html"><span class="d">2025-11-06</span><span class="t">ＢＴＳオラレ志布志開設１６周年記念　第4日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-11-05.html"><span class="d">2025-11-05</span><span class="t">ＢＴＳオラレ志布志開設１６周年記念　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-11-04.html"><span class="d">2025-11-04</span><span class="t">ＢＴＳオラレ志布志開設１６周年記念　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-11-03.html"><span class="d">2025-11-03</span><span class="t">ＢＴＳオラレ志布志開設１６周年記念　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-10-31.html"><span class="d">2025-10-31</span><span class="t">マスターズリーグ第８戦　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-10-30.html"><span class="d">2025-10-30</span><span class="t">マスターズリーグ第８戦　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-10-29.html"><span class="d">2025-10-29</span><span class="t">マスターズリーグ第８戦　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-10-28.html"><span class="d">2025-10-28</span><span class="t">マスターズリーグ第８戦　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-10-27.html"><span class="d">2025-10-27</span><span class="t">マスターズリーグ第８戦　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-26.html"><span class="d">2025-10-26</span><span class="t">マスターズリーグ第８戦　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-10-24.html"><span class="d">2025-10-24</span><span class="t">デイリースポーツ杯　第5日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-23.html"><span class="d">2025-10-23</span><span class="t">デイリースポーツ杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-22.html"><span class="d">2025-10-22</span><span class="t">デイリースポーツ杯　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-10-21.html"><span class="d">2025-10-21</span><span class="t">デイリースポーツ杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-20.html"><span class="d">2025-10-20</span><span class="t">デイリースポーツ杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-10-18.html"><span class="d">2025-10-18</span><span class="t">ＢＴＳ鹿島開設１０周年記念～しあわせ街道杯～　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-17.html"><span class="d">2025-10-17</span><span class="t">ＢＴＳ鹿島開設１０周年記念～しあわせ街道杯～　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-10-16.html"><span class="d">2025-10-16</span><span class="t">ＢＴＳ鹿島開設１０周年記念～しあわせ街道杯～　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-15.html"><span class="d">2025-10-15</span><span class="t">ＢＴＳ鹿島開設１０周年記念～しあわせ街道杯～　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-10-14.html"><span class="d">2025-10-14</span><span class="t">ＢＴＳ鹿島開設１０周年記念～しあわせ街道杯～　第1日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-10-08.html"><span class="d">2025-10-08</span><span class="t">長崎新聞社杯　第4日</span><span class="c"><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-10-07.html"><span class="d">2025-10-07</span><span class="t">長崎新聞社杯　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 9/12</span></a></li>
+<li><a href="2025-10-06.html"><span class="d">2025-10-06</span><span class="t">長崎新聞社杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-10-05.html"><span class="d">2025-10-05</span><span class="t">長崎新聞社杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2025-10-02.html"><span class="d">2025-10-02</span><span class="t">オールレディース競走　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-10-01.html"><span class="d">2025-10-01</span><span class="t">オールレディース競走　第5日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-09-30.html"><span class="d">2025-09-30</span><span class="t">オールレディース競走　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-09-29.html"><span class="d">2025-09-29</span><span class="t">オールレディース競走　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-09-28.html"><span class="d">2025-09-28</span><span class="t">オールレディース競走　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-09-27.html"><span class="d">2025-09-27</span><span class="t">オールレディース競走　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 1</span></span><span class="r">1号艇1着 4/12</span></a></li>
+<li><a href="2025-09-24.html"><span class="d">2025-09-24</span><span class="t">サンケイスポーツ杯　第6日</span><span class="c"><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-09-23.html"><span class="d">2025-09-23</span><span class="t">サンケイスポーツ杯　第5日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-09-22.html"><span class="d">2025-09-22</span><span class="t">サンケイスポーツ杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-09-21.html"><span class="d">2025-09-21</span><span class="t">サンケイスポーツ杯　第3日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2025-09-20.html"><span class="d">2025-09-20</span><span class="t">サンケイスポーツ杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-09-19.html"><span class="d">2025-09-19</span><span class="t">サンケイスポーツ杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-09-17.html"><span class="d">2025-09-17</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-09-16.html"><span class="d">2025-09-16</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第3日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-09-15.html"><span class="d">2025-09-15</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-09-14.html"><span class="d">2025-09-14</span><span class="t">ミッドナイトボートレースｉｎ大村 ７　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 7/12</span></a></li>
+<li><a href="2025-09-03.html"><span class="d">2025-09-03</span><span class="t">スポーツ報知杯　第7日</span><span class="c"><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-09-02.html"><span class="d">2025-09-02</span><span class="t">スポーツ報知杯　第6日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 5</span></span><span class="r">1号艇1着 11/12</span></a></li>
+<li><a href="2025-09-01.html"><span class="d">2025-09-01</span><span class="t">スポーツ報知杯　第5日</span><span class="c"><span class="chip b-solid">🔒 堅い 6</span></span><span class="r">1号艇1着 10/12</span></a></li>
+<li><a href="2025-08-31.html"><span class="d">2025-08-31</span><span class="t">スポーツ報知杯　第4日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 2</span><span class="chip b-solid">🔒 堅い 3</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-08-30.html"><span class="d">2025-08-30</span><span class="t">スポーツ報知杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 4</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-08-29.html"><span class="d">2025-08-29</span><span class="t">スポーツ報知杯　第2日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 6/12</span></a></li>
+<li><a href="2025-08-28.html"><span class="d">2025-08-28</span><span class="t">スポーツ報知杯　第1日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 2</span><span class="chip b-watch">⚡ 荒れ注目 4</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 5/12</span></a></li>
+<li><a href="2025-08-25.html"><span class="d">2025-08-25</span><span class="t">夜の九州スポーツ杯　第6日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 1</span><span class="chip b-solid">🔒 堅い 2</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-08-24.html"><span class="d">2025-08-24</span><span class="t">夜の九州スポーツ杯　第5日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-08-23.html"><span class="d">2025-08-23</span><span class="t">夜の九州スポーツ杯　第4日</span><span class="c"><span class="chip b-watch">⚡ 荒れ注目 3</span><span class="chip b-solid">🔒 堅い 4</span></span><span class="r">1号艇1着 8/12</span></a></li>
+<li><a href="2025-08-22.html"><span class="d">2025-08-22</span><span class="t">夜の九州スポーツ杯　第3日</span><span class="c"><span class="chip b-alert">⚡⚡ 最注目 1</span><span class="chip b-watch">⚡ 荒れ注目 2</span></span><span class="r">1号艇1着 4/12</span></a></li>
+</ul>
+
+<div class="foot">
+荒れ度 ＝ 1 −（1号艇が1着になる確率）。番組表が出た時点で算出できます。<br>
+各ページの「答え合わせ」に、209開催日ぶんの検証を載せています。<br>
+生成 2026-08-30 23:44 JST
+</div>
+</div>
+</body>
+</html>
