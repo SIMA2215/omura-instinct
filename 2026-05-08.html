@@ -493,6 +493,13 @@ table.dt{border-collapse:collapse; width:100%}
   transform:translate(-50%,-50%); box-shadow:0 0 0 2px var(--surface)}
 .cal-bar .pred{background:var(--surface); border:2px solid var(--muted)}  /* 予測＝中空 */
 .cal-bar .act{background:var(--ink)}                                      /* 実測＝塗り */
+.mchart{width:100%; margin:2px 0 10px}
+.mchart svg{width:100%; height:auto; display:block; overflow:visible}
+.mchart-legend{display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  font-size:10.5px; font-family:var(--f-mono); color:var(--muted); margin-bottom:6px}
+.mchart-legend span{display:inline-flex; align-items:center; gap:6px}
+.mchart-legend i{display:inline-block; width:16px; height:2.5px; border-radius:2px}
+.mchart-legend i.base{background:var(--good); opacity:.55}
 .cal-legend{display:flex; align-items:center; gap:14px; flex-wrap:wrap;
   font-size:10px; font-family:var(--f-mono); color:var(--muted); margin-bottom:7px}
 .cal-legend span{display:inline-flex; align-items:center; gap:5px}
@@ -887,6 +894,57 @@ function raceCharacter(){
   if(inn>=55) return {tag:"標準",cls:"t-normal",inn,text:"大村の平均的なレースです。"};
   if(inn>=40) return {tag:"波乱含み",cls:"t-rough",inn,text:"インの信頼度が平均を下回ります。"};
   return {tag:"イン苦戦",cls:"t-collapse",inn,text:"この6艇と条件では、インが有利とは言えません。"};
+}
+
+/* ═════════ 月次の推移（折れ線） ═════════ */
+/* 209開催日ぶんのデータを持ちながら時系列のグラフが1つも無かった。
+   「月次で1号艇1着率が18.5pt振れる」が文章でしか存在していなかったので図にする。
+   モデルと1号艇はどちらも「レースに占める割合(%)」で単位が同じ。
+   だから1つの軸に2本引いてよい（単位の違うものを2軸で重ねるのは禁止）。 */
+function monthlyChart(rows, baseline){
+  if(!rows||rows.length<2) return "";
+  const W=760, H=190, L=34, R=10, T=14, B=30;            // viewBox と余白
+  const vals=rows.flatMap(m=>[m.model,m.lane1]).concat([baseline]);
+  let lo=Math.floor(Math.min(...vals)/5)*5-2, hi=Math.ceil(Math.max(...vals)/5)*5+2;
+  const x=i=>L+(W-L-R)*(rows.length===1?0:i/(rows.length-1));
+  const y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const path=k=>rows.map((m,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(m[k]).toFixed(1)}`).join("");
+  const dots=(k,c)=>rows.map((m,i)=>
+    `<circle cx="${x(i).toFixed(1)}" cy="${y(m[k]).toFixed(1)}" r="3.2" fill="${c}"
+      stroke="var(--surface)" stroke-width="1.5"><title>${m.ym} ${k==="model"?"モデル":"1号艇"} ${m[k].toFixed(1)}%（${m.n}レース）</title></circle>`).join("");
+  const ticks=[lo,Math.round((lo+hi)/2),hi].map(v=>
+    `<line x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"
+       stroke="var(--line-soft)" stroke-width="1"/>
+     <text x="${L-6}" y="${(y(v)+3.5).toFixed(1)}" text-anchor="end"
+       fill="var(--muted)" font-size="9.5">${v}%</text>`).join("");
+  // 月ラベルは全部出すと潰れるので、年が変わる月と両端だけ
+  const labs=rows.map((m,i)=>{
+    const show=i===0||i===rows.length-1||m.ym.endsWith("-01");
+    return show?`<text x="${x(i).toFixed(1)}" y="${H-10}" text-anchor="middle"
+      fill="var(--muted)" font-size="9.5">${m.ym.slice(2)}</text>`:""}).join("");
+  const lo2=rows.reduce((a,b)=>b.lane1<a.lane1?b:a), hi2=rows.reduce((a,b)=>b.lane1>a.lane1?b:a);
+  const call=(m,dy)=>`<text x="${x(rows.indexOf(m)).toFixed(1)}" y="${(y(m.lane1)+dy).toFixed(1)}"
+     text-anchor="middle" fill="var(--ink-2)" font-size="9.5"
+     font-family="var(--f-mono)">${m.lane1.toFixed(1)}</text>`;
+  return `
+  <div class="mchart-legend">
+    <span><i style="background:var(--ember)"></i>スコア最上位の的中率</span>
+    <span><i style="background:var(--ink-2)"></i>1号艇が1着だった率</span>
+    <span><i class="base"></i>大村の通算 ${baseline}%</span>
+  </div>
+  <div class="mchart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+     aria-label="月ごとの的中率と1号艇1着率の推移">
+    ${ticks}
+    <line x1="${L}" x2="${W-R}" y1="${y(baseline).toFixed(1)}" y2="${y(baseline).toFixed(1)}"
+      stroke="var(--good)" stroke-width="1" opacity=".55"/>
+    <path d="${path("lane1")}" fill="none" stroke="var(--ink-2)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${path("model")}" fill="none" stroke="var(--ember)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots("lane1","var(--ink-2)")}${dots("model","var(--ember)")}
+    ${call(hi2,-9)}${call(lo2,16)}
+    ${labs}
+  </svg></div>`;
 }
 
 /* ═════════ キャリブレーション（ダンベル図） ═════════ */
@@ -1876,7 +1934,10 @@ function renderBacktest(){
 
       <div class="bt-sec">
         <h3>月ごとの推移</h3>
-        <div class="lead">まぐれではないかの確認。棒がモデル、縦線が1号艇固定の基準線。</div>
+        <div class="lead">まぐれではないかの確認。
+          <b>1号艇1着率は月で18.5pt振れます</b>（下の折れ線）。
+          短い期間だけ見て良し悪しを判断しないための図です。</div>
+        ${monthlyChart(B.monthly, 61.9)}
         <table class="bt-table">
           <thead><tr><th>月</th><th>レース数</th><th></th><th>モデル</th><th>1号艇</th><th>差</th></tr></thead>
           <tbody>${months}</tbody>
